@@ -4,6 +4,12 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 
+'''
+
+Base model score: 21122.78475
+
+'''
+
 # True - testing against train set to measure accuracy.
 # False - testing against test set and save for submission.
 is_accuracy = True
@@ -22,19 +28,19 @@ X = home_data[features]
 
 if is_accuracy:
     
-    # Split into validation and training data
+    # Split into validation and training data.
     train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=1)
     
-    # Specify Model
+    # Specify model.
     iowa_model = DecisionTreeRegressor(random_state=1)
     
-    # Fit Model
+    # Fit model.
     iowa_model.fit(train_X, train_y)
     
-    # Make validation predictions and calculate mean absolute error
+    # Make validation predictions and calculate mean absolute error.
     val_predictions = iowa_model.predict(val_X)
     val_mae = mean_absolute_error(val_predictions, val_y)
-    print("Validation MAE when not specifying max_leaf_nodes: {:,.0f}".
+    print("Validation MAE when not specifying base max_leaf_nodes: {:,.0f}".
           format(val_mae))
     
     # Using best value for max_leaf_nodes
@@ -42,7 +48,7 @@ if is_accuracy:
     iowa_model.fit(train_X, train_y)
     val_predictions = iowa_model.predict(val_X)
     val_mae = mean_absolute_error(val_predictions, val_y)
-    print("Validation MAE for best value of max_leaf_nodes: {:,.0f}".
+    print("Validation MAE for best value of base max_leaf_nodes: {:,.0f}".
           format(val_mae))
     
     # Define the model. Set random_state to 1
@@ -51,7 +57,7 @@ if is_accuracy:
     rf_val_predictions = rf_model.predict(val_X)
     rf_val_mae = mean_absolute_error(rf_val_predictions, val_y)
     
-    print("Validation MAE for Random Forest Model: {:,.0f}".
+    print("Validation MAE for base Random Forest Model: {:,.0f}".
           format(rf_val_mae))
     
 else:

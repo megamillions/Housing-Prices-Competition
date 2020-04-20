@@ -4,6 +4,12 @@ from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 
+'''
+
+2nd submission verified score: 17955.36781
+
+'''
+
 # True - testing against train set to measure accuracy.
 # False - testing against test set and save for submission.
 is_accuracy = True
@@ -18,8 +24,11 @@ y = home_data.SalePrice
 # Features with binary categorical data.
 cat_features = ['Street', 'CentralAir']
 
-# Features with missing data.
-na_features = ['LotFrontage', 'MasVnrArea', 'GarageYrBlt']
+# Features with missing data, either in train or test set.
+na_features = ['LotFrontage', 'MasVnrArea', 'GarageYrBlt',
+               'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',
+               'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath',
+               'GarageCars', 'GarageArea']
 
 # Features with categorical and missing data.
 cat_na_features = ['Alley', 'FireplaceQu', 'GarageFinish',
@@ -38,16 +47,13 @@ to_clean_features = ['YearRemodAdd', 'ExterQual', 'ExterCond',
 other_features = ['SaleCondition']
 
 # Features with no need to edit.
-features = ['LotArea', 'OverallQual', 'OverallCond'
-            'YearBuilt', 'BsmtFinSF1', 'BsmtFinSF2',
-            'BsmtUnfSF', 'TotalBsmtSF', '1stFlrSF',
-            '2ndFlrSF', 'LowQualFinSF', 'GrLivArea',
-            'BsmtFullBath', 'BsmtHalfBath', 'FullBath',
+features = ['LotArea', 'OverallQual', 'OverallCond',
+            'YearBuilt', '1stFlrSF', '2ndFlrSF',
+            'LowQualFinSF', 'GrLivArea', 'FullBath',
             'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
-            'TotRmsAbvGrd', 'Fireplaces', 'GarageCars',
-            'GarageArea', 'WoodDeckSF', 'OpenPorchSF',
-            'EnclosedPorch', '3SsnPorch', 'ScreenPorch',
-            'PoolArea', 'MiscVal']
+            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
+            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
+            'ScreenPorch', 'PoolArea', 'MiscVal']
 X = home_data[features]
 
 if is_accuracy:
@@ -111,3 +117,4 @@ else:
                            'SalePrice': test_preds})
     
     output.to_csv('submission.csv', index=False)
+    print('File successfully saved!')
