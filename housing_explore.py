@@ -6,7 +6,10 @@ from sklearn.tree import DecisionTreeRegressor
 
 '''
 
-2nd submission verified score: 17955.36781
+3rd model score: 16685.82146
+Validation MAE when not specifying max_leaf_nodes: 23,874
+Validation MAE for best value of max_leaf_nodes: 23,874
+Validation MAE for Random Forest Model: 15,877
 
 '''
 
@@ -18,45 +21,34 @@ is_accuracy = True
 iowa_file_path = 'train.csv'
 home_data = pd.read_csv(iowa_file_path)
 
-# Create target object and call it y
-y = home_data.SalePrice
+# Average out any na values.
+def average_na(series):
+    return series.fillna(series.mean())
 
-# Features with binary categorical data.
-cat_features = ['Street', 'CentralAir']
+# Numericize rankings into a 5-point score.
+def score_5_ranking(series):
+    
+    rankings = {
+        'Ex' : 4,
+        'Gd' : 3,
+        'TA' : 2,
+        'Fa' : 1,
+        'Po' : 0}
+    
+    return series.map(rankings)
 
-# Features with missing data, either in train or test set.
-na_features = ['LotFrontage', 'MasVnrArea', 'GarageYrBlt',
-               'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',
-               'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath',
-               'GarageCars', 'GarageArea']
+# Numericize rankings into a 3-point score.
+def score_3_ranking(series):
+    
+    rankings = {
+        'Y' : 2,
+        'P' : 1,
+        'N' : 0}
+    
+    return series.map(rankings)
 
-# Features with categorical and missing data.
-cat_na_features = ['Alley', 'FireplaceQu', 'GarageFinish',
-                   'GarageQual', 'GarageCond', 'PoolQC',
-                   'Fence']
-
-# Features with some other cleaning probably required.
-# YearRemodAdd - consider subtracting from current year or construct year.
-# ExterQual-BsmtFinType2 - convert from string to numerical value.
-to_clean_features = ['YearRemodAdd', 'ExterQual', 'ExterCond',
-                     'BsmtQual', 'BsmtCond', 'BsmtExposure',
-                     'BsmtFinType1', 'BsmtFinType2', 'HeatingQC',
-                     'KitchenQual', 'PavedDrive']
-
-# Other features with no immediate but an eventual use.
-other_features = ['SaleCondition']
-
-# Features with no need to edit.
-features = ['LotArea', 'OverallQual', 'OverallCond',
-            'YearBuilt', '1stFlrSF', '2ndFlrSF',
-            'LowQualFinSF', 'GrLivArea', 'FullBath',
-            'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
-            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
-            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
-            'ScreenPorch', 'PoolArea', 'MiscVal']
-X = home_data[features]
-
-if is_accuracy:
+# Returns specified model.
+def get_model(X, y, m):
     
     # Split into validation and training data.
     train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=1)
@@ -76,7 +68,7 @@ if is_accuracy:
     # Using best value for max_leaf_nodes
     iowa_model = DecisionTreeRegressor(max_leaf_nodes=100, random_state=1)
     iowa_model.fit(train_X, train_y)
-    val_predictions = iowa_model.predict(val_X)
+    max_val_predictions = iowa_model.predict(val_X)
     val_mae = mean_absolute_error(val_predictions, val_y)
     print("Validation MAE for best value of max_leaf_nodes: {:,.0f}".
           format(val_mae))
@@ -86,28 +78,107 @@ if is_accuracy:
     rf_model.fit(train_X, train_y)
     rf_val_predictions = rf_model.predict(val_X)
     rf_val_mae = mean_absolute_error(rf_val_predictions, val_y)
-    
     print("Validation MAE for Random Forest Model: {:,.0f}".
           format(rf_val_mae))
+
+    # Returns specified model's dataframe.
+    results = [val_predictions, max_val_predictions, rf_val_predictions]
+    return results[m]
+
+# Create target object and call it y
+y = home_data.SalePrice
+
+'''
+# Features with binary categorical data.
+cat_features = ['Street', 'CentralAir']
+
+# Features with categorical and missing data.
+cat_na_features = ['Alley', 'FireplaceQu', 'GarageFinish',
+                   'GarageQual', 'GarageCond', 'PoolQC',
+                   'Fence']
+
+# Features needing cleaning and with missing data.
+to_clean_na_features = ['BsmtQual', 'BsmtCond', 'BsmtExposure',
+                        'BsmtFinType1', 'BsmtFinType2']
+
+# Other features with no immediate but an eventual use.
+other_features = ['SaleCondition']
+'''
+
+# Features with no need to edit.
+features = ['LotArea', 'OverallQual', 'OverallCond',
+            'YearBuilt', '1stFlrSF', '2ndFlrSF',
+            'LowQualFinSF', 'GrLivArea', 'FullBath',
+            'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
+            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
+            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
+            'ScreenPorch', 'PoolArea', 'MiscVal']
+
+# Fill in na features with series average.
+average_na_features = ['GarageYrBlt', 'BsmtFinSF1', 'TotalBsmtSF',
+                       'GarageCars']
+
+# Resolve ranking features to 5-point score.
+scoring_5_features = ['ExterQual', 'ExterCond',
+                      'HeatingQC', 'KitchenQual']
+
+# Resolve ranking features to 3-point score.
+scoring_3_features = ['PavedDrive']
+
+# Apply data cleaning.
+for feature in average_na_features:
+    home_data[feature] = average_na(home_data[feature])
+
+for feature in scoring_5_features:
+    home_data[feature] = score_5_ranking(home_data[feature])
+
+for feature in scoring_3_features:
+    home_data[feature] = score_3_ranking(home_data[feature])
+
+# Combine all features together.
+X = pd.concat([home_data[features], home_data[average_na_features],
+               home_data[scoring_5_features], home_data[scoring_3_features]],
+              axis=1)
+
+if is_accuracy:
+    
+    # Returns the RFR model.
+    rf = get_model(X, y, 2)
     
 else:
         
     # Create a new Random Forest model.
     rf_model_on_full_data = RandomForestRegressor()
     
-    # fit rf_model_on_full_data on all data from the training data
+    # Fit rf_model_on_full_data on all data from the training data.
     rf_model_on_full_data.fit(X, y)
     
-    # path to file you will use for predictions
+    # Path to file you will use for predictions.
     test_data_path = 'test.csv'
     
-    # read test data file using pandas
+    # Read test data file using pandas.
     test_data = pd.read_csv(test_data_path)
     
-    # Create test_X which comes from test_data but includes only the
-    # columns you used for prediction.
-    # The list of columns is stored in a variable called features
-    test_X = test_data[features]
+    # Apply data cleaning.
+    for feature in average_na_features:
+        test_data[feature] = average_na(test_data[feature])
+    
+    for feature in scoring_5_features:
+        
+        test_data[feature] = score_5_ranking(test_data[feature])
+        
+        # Catch any series with missing features, and fill in with median.
+        if test_data[feature].isna().any():
+            test_data[feature] = average_na(test_data[feature])
+    
+    for feature in scoring_3_features:        
+        test_data[feature] = score_3_ranking(test_data[feature])
+    
+    # Create test_X including only the columns you used for prediction.
+    test_X = pd.concat(
+        [test_data[features], test_data[average_na_features],
+         test_data[scoring_5_features], test_data[scoring_3_features]],
+        axis=1)
     
     # make predictions which we will submit. 
     test_preds = rf_model_on_full_data.predict(test_X)
