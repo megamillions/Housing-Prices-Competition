@@ -7,9 +7,9 @@ from sklearn.tree import DecisionTreeRegressor
 
 '''
 
-Validation MAE when not specifying max_leaf_nodes: 24,059
-Validation MAE for best value of max_leaf_nodes: 22,859
-Validation MAE for Random Forest Model: 16,001
+Validation MAE when not specifying max_leaf_nodes: 24,355
+Validation MAE for best value of max_leaf_nodes: 23,625
+Validation MAE for Random Forest Model: 15,761
 
 '''
 
@@ -138,25 +138,13 @@ def get_model(X, y, m):
 # Create target object and call it y
 y = home_data.SalePrice
 
-'''
-# FEATURES NOT IMPLEMENTED
-
-# Features with binary categorical data. - 1-hot encode.
-bicat_features = ['Street', 'CentralAir']
-
-# Features with categorical data. - 1-hot encode.
-cat_features = ['SaleCondition']
-
-# Features with categorical missing data. - 1-hot encode.
-cat_na_features = ['Alley', 'MasVnrType', 'Electrical',
-                   'GarageType', 'GarageFinish', 'Fence',
-                   'MiscFeature']
-
-'''
-
 # Features with numerical missing data.
 num_na_features = ['LotFrontage', 'MasVnrArea', 'GarageYrBlt',
                    'BsmtFinSF1', 'TotalBsmtSF', 'GarageCars']
+
+# Apply data cleaning to numerical features.
+for feature in num_na_features:
+   home_data[feature] = average_na(home_data[feature])
 
 # Ordinal features to be mapped to 5-point score.
 ordinal_5_features = ['ExterQual', 'ExterCond', 'HeatingQC',
@@ -164,6 +152,13 @@ ordinal_5_features = ['ExterQual', 'ExterCond', 'HeatingQC',
 
 # Ordinal features to be mapped to 3-point score.
 ordinal_3_features = ['PavedDrive']
+
+# Apply data cleaning to ordinal features.
+for feature in ordinal_5_features:
+    home_data[feature] = rank_ordinal_5(home_data[feature])
+
+for feature in ordinal_3_features:
+    home_data[feature] = rank_ordinal_3(home_data[feature])
 
 # Ordinal features to be mapped to 7-point score, including null.
 ord_7_na_features = ['BsmtFinType1', 'BsmtFinType2']
@@ -175,26 +170,6 @@ ord_6_na_features = ['BsmtQual', 'BsmtCond', 'FireplaceQu',
 # Ordinal features to be mapped to 5-point score, including null.
 ord_5a_na_features = ['BsmtExposure']
 ord_5b_na_features = ['PoolQC']
-
-# Features with no need to edit.
-features = ['LotArea', 'OverallQual', 'OverallCond',
-            'YearBuilt', '1stFlrSF', '2ndFlrSF',
-            'LowQualFinSF', 'GrLivArea', 'FullBath',
-            'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
-            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
-            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
-            'ScreenPorch', 'PoolArea', 'MiscVal']
-
-# Apply data cleaning to numerical features.
-for feature in num_na_features:
-   home_data[feature] = average_na(home_data[feature])
-
-# Apply data cleaning to ordinal features.
-for feature in ordinal_5_features:
-    home_data[feature] = rank_ordinal_5(home_data[feature])
-
-for feature in ordinal_3_features:
-    home_data[feature] = rank_ordinal_3(home_data[feature])
 
 # Apply data cleaning to ordinal features with missing values.
 for feature in ord_7_na_features:
@@ -209,11 +184,48 @@ for feature in ord_5a_na_features:
 for feature in ord_5b_na_features:
     home_data[feature] = ordinal_5b_na(home_data[feature])
 
+# Features with binary categorical data.
+bicat_features = ['Street', 'CentralAir']
+
+# Features with categorical data.
+cat_features = ['SaleCondition']
+
+# Features with categorical missing data.
+cat_na_features = ['Alley', 'MasVnrType', 'Electrical',
+                   'GarageType', 'GarageFinish', 'Fence',
+                   'MiscFeature']
+
+# Roll all categorical features into one.
+categorical_features = []
+
+for f in bicat_features:
+    categorical_features.append(f)
+
+for g in cat_features:
+    categorical_features.append(g)
+    
+for h in cat_na_features:
+    categorical_features.append(h)
+
+# Apply data cleaning to categorical features, including with missing values.
+hd_dummies = pd.get_dummies(
+    home_data[categorical_features], columns=categorical_features)
+
+# Features with no need to edit.
+features = ['LotArea', 'OverallQual', 'OverallCond',
+            'YearBuilt', '1stFlrSF', '2ndFlrSF',
+            'LowQualFinSF', 'GrLivArea', 'FullBath',
+            'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
+            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
+            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
+            'ScreenPorch', 'PoolArea', 'MiscVal']
+
 # Combine all features together.
 X = pd.concat([home_data[features], home_data[num_na_features],
                home_data[ordinal_5_features], home_data[ordinal_3_features],
                home_data[ord_7_na_features], home_data[ord_6_na_features],
-               home_data[ord_5a_na_features], home_data[ord_5b_na_features]],
+               home_data[ord_5a_na_features], home_data[ord_5b_na_features],
+               hd_dummies],
               axis=1)
 
 if is_accuracy:
