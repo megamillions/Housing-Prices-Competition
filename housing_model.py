@@ -4,16 +4,15 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 
 '''
-
-Validation MAE for Random Forest Model: 15,761
-
+Validation MAE for Random Forest Model: 15,601
 '''
 
 # True - testing against train set to measure accuracy.
 # False - testing against test set and save for submission.
-is_accuracy = True
+is_training = True
 
 # Path of the file to read.
 iowa_file_path = 'train.csv'
@@ -27,8 +26,7 @@ num_na_features = ['LotFrontage', 'MasVnrArea', 'GarageYrBlt',
                    'BsmtFinSF1', 'TotalBsmtSF', 'GarageCars']
 
 # Ordinal features to be mapped to 5-point score.
-ordinal_5_features = ['ExterQual', 'ExterCond', 'HeatingQC',
-                      'KitchenQual']
+ordinal_5_features = ['ExterCond', 'HeatingQC', 'KitchenQual']
 
 # Ordinal features to be mapped to 3-point score.
 ordinal_3_features = ['PavedDrive']
@@ -43,37 +41,28 @@ ord_6_na_features = ['BsmtQual', 'BsmtCond', 'FireplaceQu',
 
 ord_7_na_features = ['BsmtFinType1', 'BsmtFinType2']
 
-# Features with binary categorical data.
-bicat_features = ['Street', 'CentralAir']
-
 # Features with categorical data.
-cat_features = ['SaleCondition']
+categorical_features = ['MSSubClass', 'MSZoning', 'Street',
+                     'LotShape', 'LandContour', 'Utilities',
+                     'LotConfig', 'LandSlope', 'Neighborhood',
+                     'Condition1', 'Condition2', 'BldgType',
+                     'HouseStyle', 'RoofStyle', 'RoofMatl',
+                     'Exterior1st', 'Exterior2nd', 'Foundation',
+                     'Heating', 'CentralAir', 'PavedDrive',
+                     'SaleType', 'SaleCondition']
 
 # Features with categorical missing data to be assigned dummy variables.
 cat_na_features = ['Alley', 'MasVnrType', 'Electrical',
                    'GarageType', 'GarageFinish', 'Fence',
                    'MiscFeature']
 
-# Roll all categorical features into one.
-categorical_features = []
-
-for f in bicat_features:
-    categorical_features.append(f)
-
-for g in cat_features:
-    categorical_features.append(g)
-    
-for h in cat_na_features:
-    categorical_features.append(h)
-
 # Features with no need to edit.
-features = ['LotArea', 'OverallQual', 'OverallCond',
-            'YearBuilt', '1stFlrSF', '2ndFlrSF',
-            'LowQualFinSF', 'GrLivArea', 'FullBath',
-            'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
-            'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
-            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
-            'ScreenPorch', 'PoolArea', 'MiscVal']
+features = ['OverallQual', 'OverallCond', 'YearBuilt',
+            '1stFlrSF', '2ndFlrSF', 'LowQualFinSF',
+            'GrLivArea', 'FullBath', 'HalfBath',
+            'BedroomAbvGr', 'TotRmsAbvGrd', 'Fireplaces',
+            'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch',
+            '3SsnPorch', 'PoolArea', 'MiscVal']
 
 def map_na_5a(dataset, features):
     
@@ -188,16 +177,22 @@ def clean_data(dataset):
     map_na_6(dataset, ord_6_na_features)
     map_na_7(dataset, ord_7_na_features)
 
-    # Apply data cleaning to categorical features, including with missing values.
+    # Apply data cleaning to categorical features.
+    oh_encoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
+    oh_cols = pd.DataFrame(oh_encoder.fit_transform(dataset[categorical_features]))
+
+    oh_cols.index = dataset.index
+    
+    # Create dummies for features with nan.
     hd_dummies = pd.get_dummies(
-        dataset[categorical_features], columns=categorical_features)
+        dataset[cat_na_features], columns=cat_na_features)
 
     # Combine all features together.
     X = pd.concat([dataset[features], dataset[num_na_features],
                dataset[ordinal_5_features], dataset[ordinal_3_features],
                dataset[ord_7_na_features], dataset[ord_6_na_features],
                dataset[ord_5a_na_features], dataset[ord_5b_na_features],
-               hd_dummies],
+               oh_cols, hd_dummies],
               axis=1)
 
     return X
@@ -205,7 +200,7 @@ def clean_data(dataset):
 # Combine all features together.
 X = clean_data(home_data)
 
-if is_accuracy:
+if is_training:
     
     # Split into validation and training data.
     train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=1)
