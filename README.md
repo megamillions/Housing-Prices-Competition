@@ -6,6 +6,10 @@ Map ordinal features to integers.
 
 Impute missing values.
 
-Create dummy variables to categorical features.
+~~Parse categorical features with OneHotEncoder.~~
+
+Create dummy variables to missing categorical features.
+
+Process model construction with pipelines.
 
 Dataset and more information can be found here: https://www.kaggle.com/c/home-data-for-ml-course
