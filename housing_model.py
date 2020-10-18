@@ -52,12 +52,12 @@ num_na_features = ['LotFrontage', 'LotArea', 'MasVnrArea',
 # Features with no need to edit.
 features = ['OverallQual', 'OverallCond', 'YearBuilt',
             'YearRemodAdd', '1stFlrSF', '2ndFlrSF',
-			'LowQualFinSF', 'GrLivArea', 'FullBath',
+            'LowQualFinSF', 'GrLivArea', 'FullBath',
             'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr',
             'TotRmsAbvGrd', 'Fireplaces', 'WoodDeckSF',
-			'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
-			'ScreenPorch', 'PoolArea', 'MiscVal',
-			'YrSold']
+            'OpenPorchSF', 'EnclosedPorch', '3SsnPorch',
+            'ScreenPorch', 'PoolArea', 'MiscVal',
+            'YrSold']
 
 def map_na_5a(dataset, features):
     
